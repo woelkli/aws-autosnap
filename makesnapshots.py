@@ -153,7 +153,7 @@ for i in insts:
             instName= "%s" % i.tags['Name']
         else:
             instName= "%s" % i.id
-    # Snapshot of each volume attached to the instance
+    # Iterate through each volume attached to the selected instances
     for vol in volumes:
         try:
             count_total += 1
@@ -162,13 +162,15 @@ for i in insts:
 			# Detailed info for 'description' tag
             description = 'BACKUP:%(instName)s %(period)s_snapshot %(vol_id)s_%(period)s_%(date_suffix)s by snapshot script at %(date)s' % {
                 'instName': instName,
-            'period': period,
+                'period': period,
                 'vol_id': vol.id,
                 'date_suffix': date_suffix,
                 'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S')
             }
             try:
+			    # Create snapshot
                 current_snap = vol.create_snapshot(description)
+				# Give snapshot the same tags from volume
                 set_resource_tags(current_snap, tags_volume)
 				# Uses instance name for snapshot name
 			    set_resource_tags(current_snap, {"Name":instName})
