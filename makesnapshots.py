@@ -159,6 +159,7 @@ for i in insts:
             count_total += 1
             logging.info(vol)
             tags_volume = get_resource_tags(vol.id)
+			# Detailed info for 'description' tag
             description = 'BACKUP:%(instName)s %(period)s_snapshot %(vol_id)s_%(period)s_%(date_suffix)s by snapshot script at %(date)s' % {
                 'instName': instName,
             'period': period,
@@ -169,6 +170,7 @@ for i in insts:
             try:
                 current_snap = vol.create_snapshot(description)
                 set_resource_tags(current_snap, tags_volume)
+				# Uses instance name for snapshot name
 			    set_resource_tags(current_snap, {"Name":instName})
                 suc_message = 'Snapshot created with description: %s and tags: %s' % (description, str(tags_volume))
                 print '     ' + suc_message
