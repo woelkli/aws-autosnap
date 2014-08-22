@@ -229,6 +229,7 @@ for i in insts:
         else:
             count_success += 1
 
+# Result message
 result = '\nFinished making snapshots at %(date)s with %(count_success)s snapshots of %(count_total)s possible.\n\n' % {
     'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S'),
     'count_success': count_success,
