@@ -150,16 +150,16 @@ for i in insts:
     # Get all the volumes attached to this instance
     volumes = conn.get_all_volumes(filters={'attachment.instance-id': i.id})
     if 'Name' in i.tags:
-            instName= "%s" % i.tags['Name']
-        else:
-            instName= "%s" % i.id
+        instName= "%s" % i.tags['Name']
+    else:
+        instName= "%s" % i.id
     # Iterate through each volume attached to the selected instances
     for vol in volumes:
         try:
             count_total += 1
             logging.info(vol)
             tags_volume = get_resource_tags(vol.id)
-			# Detailed info for 'description' tag
+            # Detailed info for 'description' tag
             description = 'BACKUP:%(instName)s %(period)s_snapshot %(vol_id)s_%(period)s_%(date_suffix)s by snapshot script at %(date)s' % {
                 'instName': instName,
                 'period': period,
@@ -168,12 +168,12 @@ for i in insts:
                 'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S')
             }
             try:
-			    # Create snapshot
+                # Create snapshot
                 current_snap = vol.create_snapshot(description)
-				# Give snapshot the same tags from volume
+                # Give snapshot the same tags from volume
                 set_resource_tags(current_snap, tags_volume)
-				# Uses instance name for snapshot name
-			    set_resource_tags(current_snap, {"Name":instName})
+                # Uses instance name for snapshot name
+                set_resource_tags(current_snap, {"Name":instName})
                 suc_message = 'Snapshot created with description: %s and tags: %s' % (description, str(tags_volume))
                 print '     ' + suc_message
                 logging.info(suc_message)
