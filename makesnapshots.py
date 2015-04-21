@@ -47,8 +47,7 @@ deletelist = []
 
 # Setup logging
 logging.basicConfig(filename=config['log_file'], level=logging.INFO)
-start_message = 'Started taking %(period)s snapshots at %(date)s' % {
-    'period': period,
+start_message = 'Started taking snapshots at %(date)s' % {
     'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S')
 }
 message += start_message + "\n\n"
@@ -141,8 +140,7 @@ def set_resource_tags(resource, tags):
             resource.add_tag(tag_key, tag_value)
 
 # Get all the instances that match the tag criteria
-print('Finding volumes that match the requested tag \
-        ({ "tag:%(tag_name)s": "%(tag_value)s" })' % config)
+print('Finding volumes to snapshot')
 instances = conn.get_only_instances(filters={
     'tag:' + config['tag_name']: config['tag_value']})
 
@@ -174,9 +172,8 @@ for instance in instances:
                 set_resource_tags(current_snapshot, tags_volume)
                 # Uses instance name for snapshot name
                 set_resource_tags(current_snapshot, {"Name": instance_name})
-                suc_message = 'Snapshot created with description: %s and tags: \
-                        %s' % (description, str(tags_volume))
-                print('     ' + suc_message)
+                suc_message = 'Snapshot created for %s' % (vol)
+                print(suc_message)
                 logging.info(suc_message)
                 total_creates += 1
             except Exception as e:
@@ -195,7 +192,7 @@ for instance in instances:
                 elif (sndesc.find('month_snapshot') == 1 and period == 'month'):
                     deletelist.append(snap)
                 else:
-                    logging.info('     Skipping, not added to deletelist: '
+                    logging.info('Skipping, not added to deletelist: '
                                  + sndesc)
 
             for snap in deletelist:
@@ -219,7 +216,7 @@ for instance in instances:
             delta = len(deletelist) - keep
             for snapshot in range(delta):
                 del_message = (
-                    '     Deleting snapshot '
+                    'Deleting snapshot '
                     + deletelist[snapshot].description
                     )
                 logging.info(del_message)
@@ -248,6 +245,7 @@ message += "\nTotal snapshots errors: " + str(count_errors)
 message += "\nTotal snapshots deleted: " + str(total_deletes) + "\n"
 
 print('\n' + message + '\n')
+logging.info('\n' + message + '\n')
 
 # SNS reporting
 if sns_arn:
