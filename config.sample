@@ -1,6 +1,6 @@
 config = {
 
-    # AWS credentials for the IAM user (alternatively can be set up as environment variables)
+    # AWS credentials (remove if using an EC2 instance with an IAM role)
     'aws_access_key': 'xxxxxxxx',
     'aws_secret_key': 'xxxxxxxxxxxx',
 
