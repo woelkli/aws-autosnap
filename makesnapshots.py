@@ -248,7 +248,6 @@ message += "\nTotal snapshots errors: " + str(count_errors)
 message += "\nTotal snapshots deleted: " + str(total_deletes) + "\n"
 
 print('\n' + message + '\n')
-print(result)
 
 # SNS reporting
 if sns_arn:
