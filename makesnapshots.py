@@ -162,13 +162,9 @@ for instance in instances:
             logging.info(vol)
             tags_volume = get_resource_tags(vol.id)
             # Detailed info for 'description' tag
-            description = 'BACKUP:%(instance_name)s %(period)s_snapshot \
-                    %(vol_id)s_%(period)s_%(date_suffix)s by snapshot script \
-                    at %(date)s' % {
+            description = 'BACKUP: %(instance_name)s %(vol_id)s at %(date)s' % {
                 'instance_name': instance_name,
-                'period': period,
                 'vol_id': vol.id,
-                'date_suffix': date_suffix,
                 'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S')
             }
             try:
