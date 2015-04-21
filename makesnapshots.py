@@ -56,7 +56,7 @@ aws_access_key = config['aws_access_key']
 aws_secret_key = config['aws_secret_key']
 ec2_region_name = config['ec2_region_name']
 ec2_region_endpoint = config['ec2_region_endpoint']
-sns_arn = config.get('arn')
+sns_arn = config.get('sns_arn')
 proxyHost = config.get('proxyHost')
 proxyPort = config.get('proxyPort')
 
