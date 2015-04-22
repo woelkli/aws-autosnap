@@ -137,20 +137,20 @@ for instance in instances:
     else:
         instance_name = "%s" % instance.id
     # Iterate through each volume attached to the selected instances
-    for vol in volumes:
+    for volume in volumes:
         try:
             count_total += 1
-            logging.info(vol)
-            tags_volume = get_resource_tags(vol.id)
+            logging.info(volume)
+            tags_volume = get_resource_tags(volume.id)
             # Detailed info for 'description' tag
-            description = 'BACKUP: %(instance_name)s %(vol_id)s at %(date)s' % {
+            description = 'BACKUP: %(instance_name)s %(volume_id)s at %(date)s' % {
                 'instance_name': instance_name,
-                'vol_id': vol.id,
+                'volume_id': volume.id,
                 'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S')
             }
             try:
                 # Create snapshot
-                current_snapshot = vol.create_snapshot(description)
+                current_snapshot = volume.create_snapshot(description)
                 # Give snapshot the same tags from volume
                 set_resource_tags(current_snapshot, tags_volume)
                 # Give snapshot tag that indicates it's ours
@@ -168,24 +168,24 @@ for instance in instances:
                 logging.error(e)
                 pass
 
-            snapshots = vol.snapshots()
+            snapshots = volume.snapshots()
             deletelist = []
-            for snap in snapshots:
-                tags_snapshot = get_resource_tags(snap.id)
+            for snapshot in snapshots:
+                tags_snapshot = get_resource_tags(snapshot.id)
                 if tag_name in tags_snapshot.values():
-                    deletelist.append(snap)
+                    deletelist.append(snapshot)
                 else:
                     logging.info('     Skipping, not added to deletelist: '
-                                 + snap.id)
+                                 + snapshot.id)
 
-            for snap in deletelist:
-                logging.info(snap)
-                logging.info(snap.start_time)
+            for snapshot in deletelist:
+                logging.info(snapshot)
+                logging.info(snapshot.start_time)
 
-            def date_compare(snap1, snap2):
-                if snap1.start_time < snap2.start_time:
+            def date_compare(snapshot1, snapshot2):
+                if snapshot1.start_time < snapshot2.start_time:
                     return -1
-                elif snap1.start_time == snap2.start_time:
+                elif snapshot1.start_time == snapshot2.start_time:
                     return 0
                 return 1
 
@@ -202,8 +202,8 @@ for instance in instances:
             time.sleep(3)
         except:
             print("Unexpected error:", sys.exc_info()[0])
-            logging.error('Error in processing volume with id: ' + vol.id)
-            errmsg += 'Error in processing volume with id: ' + vol.id
+            logging.error('Error in processing volume with id: ' + volume.id)
+            errmsg += 'Error in processing volume with id: ' + volume.id
             count_errors += 1
         else:
             count_success += 1
