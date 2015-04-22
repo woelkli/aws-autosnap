@@ -16,23 +16,6 @@ import logging
 from config import config
 
 
-if (len(sys.argv) < 2):
-    print('Please add a positional argument: day, week or month.')
-    quit()
-else:
-    if sys.argv[1] == 'day':
-        period = 'day'
-        date_suffix = datetime.today().strftime('%a')
-    elif sys.argv[1] == 'week':
-        period = 'week'
-        date_suffix = datetime.today().strftime('%U')
-    elif sys.argv[1] == 'month':
-        period = 'month'
-        date_suffix = datetime.today().strftime('%b')
-    else:
-        print('Please use the parameter day, week or month')
-        quit()
-
 # Message to return result via SNS
 message = ""
 errmsg = ""
@@ -47,8 +30,7 @@ deletelist = []
 
 # Setup logging
 logging.basicConfig(filename=config['log_file'], level=logging.INFO)
-start_message = 'Started taking %(period)s snapshots at %(date)s' % {
-    'period': period,
+start_message = 'Started taking snapshots at %(date)s' % {
     'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S')
 }
 message += start_message + "\n\n"
@@ -62,13 +44,12 @@ ec2_region_endpoint = config['ec2_region_endpoint']
 sns_arn = config.get('sns_arn')
 proxyHost = config.get('proxyHost')
 proxyPort = config.get('proxyPort')
-
+tag_name = config['tag_name']
+tag_value = config['tag_value']
 region = RegionInfo(name=ec2_region_name, endpoint=ec2_region_endpoint)
 
 # Number of snapshots to keep
-keep_week = config['keep_week']
-keep_day = config['keep_day']
-keep_month = config['keep_month']
+keep_snapshots = config['keep_snapshots']
 count_success = 0
 count_total = 0
 
@@ -141,10 +122,8 @@ def set_resource_tags(resource, tags):
             resource.add_tag(tag_key, tag_value)
 
 # Get all the instances that match the tag criteria
-print('Finding volumes that match the requested tag \
-        ({ "tag:%(tag_name)s": "%(tag_value)s" })' % config)
-instances = conn.get_only_instances(filters={
-    'tag:' + config['tag_name']: config['tag_value']})
+print('Finding volumes that match the requested tag %s' % tag_name)
+instances = conn.get_only_instances(filters={'tag:' + tag_name: tag_value})
 
 # Iterate through each instance in the list
 for instance in instances:
@@ -172,6 +151,9 @@ for instance in instances:
                 current_snapshot = vol.create_snapshot(description)
                 # Give snapshot the same tags from volume
                 set_resource_tags(current_snapshot, tags_volume)
+                # Give snapshot tag that indicates it's ours
+                set_resource_tags(current_snapshot,
+                                  {"SnapshotType": tag_name})
                 # Uses instance name for snapshot name
                 set_resource_tags(current_snapshot, {"Name": instance_name})
                 suc_message = 'Snapshot created with description: %s and tags: \
@@ -187,16 +169,12 @@ for instance in instances:
             snapshots = vol.snapshots()
             deletelist = []
             for snap in snapshots:
-                sndesc = snap.description
-                if (sndesc.find('week_snapshot') == 1 and period == 'week'):
-                    deletelist.append(snap)
-                elif (sndesc.find('day_snapshot') == 1 and period == 'day'):
-                    deletelist.append(snap)
-                elif (sndesc.find('month_snapshot') == 1 and period == 'month'):
+                tags_snapshot = get_resource_tags(snap.id)
+                if tag_name in tags_snapshot.values():
                     deletelist.append(snap)
                 else:
                     logging.info('     Skipping, not added to deletelist: '
-                                 + sndesc)
+                                 + snap.id)
 
             for snap in deletelist:
                 logging.info(snap)
@@ -210,13 +188,7 @@ for instance in instances:
                 return 1
 
             deletelist.sort(date_compare)
-            if period == 'day':
-                keep = keep_day
-            elif period == 'week':
-                keep = keep_week
-            elif period == 'month':
-                keep = keep_month
-            delta = len(deletelist) - keep
+            delta = len(deletelist) - keep_snapshots
             for snapshot in range(delta):
                 del_message = (
                     '     Deleting snapshot '
