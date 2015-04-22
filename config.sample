@@ -19,7 +19,7 @@ config = {
     'keep_month': 11,
 
     # Path to the log for this script
-    'log_file': '/tmp/makesnapshots.log',
+    'log_file': '/var/log/autosnap.py',
 
     # ARN of the SNS topic (optional)
     #'sns_arn': 'xxxxxxxxxx',
