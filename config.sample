@@ -9,8 +9,8 @@ config = {
     'ec2_region_endpoint': 'ec2.us-east-1.amazonaws.com',
 
     # Tag of the EBS volume you want to take the snapshots of
-    'tag_name': 'AUTOSNAP',
-    'tag_value': 'True',
+    'tag_name': 'autosnap',
+    'tag_value': 'true',
 
     # Number of snapshots to keep (the older ones are going to be deleted,
     # since they cost money).

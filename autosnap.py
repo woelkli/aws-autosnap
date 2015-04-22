@@ -155,7 +155,7 @@ for instance in instances:
                 set_resource_tags(current_snapshot, tags_volume)
                 # Give snapshot tag that indicates it's ours
                 set_resource_tags(current_snapshot,
-                                  {"SnapshotType": tag_name})
+                                  {"snapshot_type": tag_name})
                 # Uses instance name for snapshot name
                 set_resource_tags(current_snapshot, {"Name": instance_name})
                 suc_message = 'Snapshot created with description: %s and tags: \
