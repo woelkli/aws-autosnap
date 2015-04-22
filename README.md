@@ -22,8 +22,8 @@ Usage
 6. For each instance that you want to snapshot, add the tag/value specified in your config.py.
 7. (optional) Install the script in the crontab. Example: 
 
-		# chmod +x makesnapshots.py
+		# chmod +x autosnap.py
 		# crontab -e
-		30 1 * * 1-5 /path/to/makesnapshots.py day
-		30 2 * * 6 /path/to/makesnapshots.py week
-		30 3 1 * * /path/to/makesnapshots.py month
+		30 1 * * 1-5 /path/to/autosnap.py day
+		30 2 * * 6 /path/to/autosnap.py week
+		30 3 1 * * /path/to/autosnap.py month
