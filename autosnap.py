@@ -48,8 +48,6 @@ tag_name = config['tag_name']
 tag_value = config['tag_value']
 region = RegionInfo(name=ec2_region_name, endpoint=ec2_region_endpoint)
 
-# Number of snapshots to keep
-keep_snapshots = config['keep_snapshots']
 count_success = 0
 count_total = 0
 
@@ -127,6 +125,10 @@ instances = conn.get_only_instances(filters={'tag:' + tag_name: tag_value})
 
 # Iterate through each instance in the list
 for instance in instances:
+    try:
+        keep_snapshots = int(instance.tags['autosnap_limit'])
+    except:
+        keep_snapshots = config['keep_snapshots']
     # Get all the volumes attached to this instance
     volumes = conn.get_all_volumes(filters={
         'attachment.instance-id': instance.id})

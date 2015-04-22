@@ -20,6 +20,7 @@ Usage
   2. Attach a security policy for this user/role (see the iam.policy.sample)
 5. Create config.py in the script's directory (use config.samle for reference).
 6. For each instance that you want to snapshot, add the tag/value specified in your config.py.
+  1. (optional) You can also add a tag 'autosnap_limit' to an instance to override the keep_snapshots setting in config.py
 7. (optional) Install the script in the crontab. Example: 
 
 		# chmod +x autosnap.py
