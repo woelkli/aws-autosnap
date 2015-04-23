@@ -1,14 +1,14 @@
-aws-snapshot-tool
+aws-autosnap
 =================
-aws-snapshot-tool is a python script to make it easy to *systematically snapshot any instances you wish*. 
+aws-autosnap is a python script to make it easy to *systematically snapshot any instances you wish*. 
 
-Simply add a tag to each instance you want snapshots of, configure and install a cronjob for aws-snapshot-tool and you are off. It will even handle cleaning old snapshots on a daily, weekly, or yearly basis so that you can setup the retention policy to suit.
+Simply add a tag to each instance you want snapshots of, configure and install a cronjob for aws-autosnap and you are off. It will even handle cleaning old snapshots on a daily, weekly, or yearly basis so that you can setup the retention policy to suit.
 
 Features:
 - *Python based*: Leverages boto and is easy to configure and run as a crontab
 - *Simple tag system*: Just add a customizable tag to each of your EBS volumes you want snapshots of
 - *Configure retention policy*: Configure how many days, weeks, and months worth of snapshots you want to retain
-- *SNS Notifications* (optional): aws-snapshot-tool works with Amazon SNS our of the box, so you can be notified of snapshots
+- *SNS Notifications* (optional): aws-autosnap works with Amazon SNS our of the box, so you can be notified of snapshots
 
 Usage
 ==========
