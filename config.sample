@@ -1,5 +1,7 @@
 config = {
 
+    # Optional settings are commented out
+
     # AWS credentials (remove if using an EC2 instance with an IAM role)
     'aws_access_key': 'xxxxxxxx',
     'aws_secret_key': 'xxxxxxxxxxxx',
@@ -16,8 +18,8 @@ config = {
     # since they cost money).
     'keep_snapshots': 7,
 
-    # Path to the log for this script
-    'log_file': '/var/log/autosnap.py',
+    # Path where you want to save the log
+    'log_file': 'autosnap.log',
 
     # ARN of the SNS topic (optional)
     #'sns_arn': 'xxxxxxxxxx',
