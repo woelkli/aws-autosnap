@@ -137,9 +137,10 @@ for instance in instances:
     volumes = conn.get_all_volumes(filters={
         'attachment.instance-id': instance.id})
     if 'Name' in instance.tags:
-        instance_name = "%s" % instance.tags['Name']
+        instance_name = "{0}".format(instance.tags['Name'])
     else:
-        instance_name = "%s" % instance.id
+        instance_name = "{0}".format(instance.id)
+
     # Iterate through each volume attached to the selected instances
     for volume in volumes:
         logging.info("%s/%s: Found volume, taking snapshot", instance.id, volume.id)
@@ -147,19 +148,18 @@ for instance in instances:
             count_total += 1
             tags_volume = get_resource_tags(volume.id)
             # Detailed info for 'description' tag
-            description = 'BACKUP: %(instance_name)s %(volume_id)s at %(date)s' % {
-                'instance_name': instance_name,
-                'volume_id': volume.id,
-                'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S')
-            }
+            description = "AUTOSNAP: {0} ({1}) at {2}".format(
+                instance_name,
+                volume.id,
+                datetime.today().strftime('%d-%m-%Y %H:%M:%S')
+            )
             try:
                 # Create snapshot
                 current_snapshot = volume.create_snapshot(description)
                 # Give snapshot the same tags from volume
                 set_resource_tags(current_snapshot, tags_volume)
                 # Give snapshot tag that indicates it's ours
-                set_resource_tags(current_snapshot,
-                                  {"snapshot_type": tag_name})
+                set_resource_tags(current_snapshot, {"snapshot_type": tag_name})
                 # Uses instance name for snapshot name
                 set_resource_tags(current_snapshot, {"Name": instance_name})
                 logging.info("%s/%s/%s: Snapshot created and tagged with \"%s\"",
