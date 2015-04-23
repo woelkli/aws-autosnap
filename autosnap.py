@@ -10,7 +10,7 @@ from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
 import boto.sns
 from datetime import datetime
-import time
+import sys
 import logging
 from config import config
 
@@ -28,16 +28,18 @@ count_errors = 0
 deletelist = []
 
 # Setup logging
-logger = logging.getLogger('autosnap')
-logger.setLevel(logging.INFO)
-logfile = logging.FileHandler(config['log_file'])
-stdout = logging.StreamHandler()
-for handler in (logfile, stdout):
-    handler.setFormatter(logging.Formatter('%(message)s'))
-    logger.addHandler(handler)
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(message)s',
+                    datefmt='%y-%m-%d %H:%M',
+                    filename=config['log_file'],
+                    filemode='a')
+console = logging.StreamHandler(sys.stdout)
+console.setLevel(logging.INFO)
+logging.getLogger('').addHandler(console)
+
 
 # Start log
-logging.info("\n\nStarted taking snapshots at %s", datetime.today().strftime('%d-%m-%Y %H:%M:%S'))
+logging.info("Initializing snapshot process")
 
 # Get settings from config.py
 aws_access_key = config['aws_access_key']
@@ -140,7 +142,7 @@ for instance in instances:
         instance_name = "%s" % instance.id
     # Iterate through each volume attached to the selected instances
     for volume in volumes:
-        logging.info("%s:%s: Found volume, taking snapshot", instance.id, volume.id)
+        logging.info("%s/%s: Found volume, taking snapshot", instance.id, volume.id)
         try:
             count_total += 1
             tags_volume = get_resource_tags(volume.id)
@@ -160,11 +162,11 @@ for instance in instances:
                                   {"snapshot_type": tag_name})
                 # Uses instance name for snapshot name
                 set_resource_tags(current_snapshot, {"Name": instance_name})
-                logging.info("%s:%s:%s: Snapshot created and tagged with \"%s\"",
+                logging.info("%s/%s/%s: Snapshot created and tagged with \"%s\"",
                              instance.id, volume.id, current_snapshot.id, tag_name)
                 total_creates += 1
             except Exception as e:
-                logging.error("%s:%s: Error while creating snapshot: %s",
+                logging.error("%s/%s: Error while creating snapshot: %s",
                               instance.id, volume.id, e)
                 pass
 
@@ -186,14 +188,13 @@ for instance in instances:
             delta = len(deletelist) - keep_snapshots
             for deletesnap in range(delta):
                 snapshot = deletelist[deletesnap]
-                logging.info("%s:%s:%s: Deleting snapshot (%s)",
+                logging.info("%s/%s/%s: Deleting snapshot (%s)",
                              instance.id, volume.id, snapshot.id, snapshot.start_time)
                 snapshot.delete()
                 total_deletes += 1
-            time.sleep(3)
 
         except Exception as e:
-            logging.error("%s:%s: Error processing volume: %s",
+            logging.error("%s/%s: Error processing volume: %s",
                           instance.id, volume.id, e)
             errmsg += "{0}:{1}: Error processing volume: {2}".format(instance.id, volume.id, e)
             count_errors += 1
@@ -201,8 +202,7 @@ for instance in instances:
             count_success += 1
 
 # Result message
-logging.info('Finished processing snapshots at %s ',
-             datetime.today().strftime('%d-%m-%Y %H:%M:%S'))
+logging.info('Finished processing snapshots')
 logging.info("Total snapshots created/deleted/errors: %s/%s/%s",
              str(total_creates), str(total_deletes), str(count_errors))
 
