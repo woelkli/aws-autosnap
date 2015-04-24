@@ -39,8 +39,11 @@ logging.getLogger('').addHandler(console)
 logging.info("Initializing snapshot process")
 
 # Get settings from config.py
-aws_access_key = config['aws_access_key']
-aws_secret_key = config['aws_secret_key']
+try:
+    aws_access_key = config['aws_access_key']
+    aws_secret_key = config['aws_secret_key']
+except:
+    logging.info('No access keys detected, trying with IAM role')
 ec2_region_name = config['ec2_region_name']
 ec2_region_endpoint = config['ec2_region_endpoint']
 sns_arn = config.get('sns_arn')
