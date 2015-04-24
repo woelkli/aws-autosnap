@@ -39,11 +39,6 @@ logging.getLogger('').addHandler(console)
 logging.info("Initializing snapshot process")
 
 # Get settings from config.py
-try:
-    aws_access_key = config['aws_access_key']
-    aws_secret_key = config['aws_secret_key']
-except:
-    logging.info('No access keys detected, trying with IAM role')
 ec2_region_name = config['ec2_region_name']
 ec2_region_endpoint = config['ec2_region_endpoint']
 sns_arn = config.get('sns_arn')
@@ -60,7 +55,9 @@ count_total = 0
 if proxyHost:
     # proxy:
     # using roles
-    if aws_access_key:
+    if config['aws_access_key']:
+        aws_access_key = config['aws_access_key']
+        aws_secret_key = config['aws_secret_key']
         conn = EC2Connection(aws_access_key, aws_secret_key, region=region,
                              proxy=proxyHost, proxy_port=proxyPort)
     else:
@@ -69,7 +66,9 @@ if proxyHost:
 else:
     # non proxy:
     # using roles
-    if aws_access_key:
+    if config['aws_access_key']:
+        aws_access_key = config['aws_access_key']
+        aws_secret_key = config['aws_secret_key']
         conn = EC2Connection(aws_access_key, aws_secret_key, region=region)
         logging.info("Authenticating with IAM access key: " + aws_access_key)
     else:
