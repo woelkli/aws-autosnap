@@ -55,23 +55,23 @@ count_total = 0
 if proxyHost:
     # proxy:
     # using roles
-    if config['aws_access_key']:
+    try:
         aws_access_key = config['aws_access_key']
         aws_secret_key = config['aws_secret_key']
         conn = EC2Connection(aws_access_key, aws_secret_key, region=region,
                              proxy=proxyHost, proxy_port=proxyPort)
-    else:
+    except:
         conn = EC2Connection(region=region, proxy=proxyHost,
                              proxy_port=proxyPort)
 else:
     # non proxy:
     # using roles
-    if config['aws_access_key']:
+    try:
         aws_access_key = config['aws_access_key']
         aws_secret_key = config['aws_secret_key']
         conn = EC2Connection(aws_access_key, aws_secret_key, region=region)
         logging.info("Authenticating with IAM access key: " + aws_access_key)
-    else:
+    except:
         conn = EC2Connection(region=region)
         logging.info("Authenticating with IAM Role")
 
