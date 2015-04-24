@@ -3,9 +3,6 @@
 # (c) 2012/2014 E.M. van Nuil / Oblivion b.v.
 # Update 2015 by Zach Himsel
 
-from __future__ import print_function
-from builtins import str
-from builtins import range
 from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
 import boto.sns
