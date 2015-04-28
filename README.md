@@ -16,11 +16,11 @@ Usage
 2. (optional) Create a SNS topic in AWS and copy the ARN into the config file
 3. (optional) Subscribe with a email address to the SNS topic
 4. Create either an IAM user or role to authenticate.
-  1. If using an IAM user, you must set the access and secret keys in either the config file, or as env variables
-  2. Attach a security policy for this user/role (see the iam.policy.sample)
+  * If using an IAM user, you must set the access and secret keys in either the config file, or as env variables
+  * Attach a security policy for this user/role (see the iam.policy.sample)
 5. Create config.py in the script's directory (use config.samle for reference).
 6. For each instance that you want to snapshot, add the tag/value specified in your config.py.
-  1. (optional) You can also add a tag 'autosnap_retention' to an instance to override the keep_snapshots setting in config.py
+  * (optional) You can also add a tag 'autosnap_retention' to an instance to override the keep_snapshots setting in config.py
 7. (optional) Install the script in the crontab. Example: 
 
 		# chmod +x autosnap.py
