@@ -141,12 +141,13 @@ for instance in instances:
                 pass
 
             # Ok, now that the new snapshot has started, let's clean up the old ones
-            snapshots = volume.snapshots()  # Make a list of all the snapshots for this volume
-            deletelist = []  # make sure the delete list is blank!
+            # Make a list of snapshots for this instance that has our tag in it
+            snapshots = aws.get_all_snapshots(filters={
+                'volume-id': volume.id,
+                'tag:snapshot_type': 'autosnap'})
+            deletelist = []  # Make sure the delete list is blank!
             for snapshot in snapshots:
-                tags_snapshot = get_resource_tags(snapshot.id)
-                if tag_name in tags_snapshot.values():
-                    deletelist.append(snapshot)
+                deletelist.append(snapshot)
 
             # Sort the delete list by snapshot age
             def date_compare(snapshot1, snapshot2):
