@@ -88,25 +88,6 @@ except:
     logging.info("Authenticating with IAM Role")
 
 
-# Define function to get resource tags
-def get_resource_tags(resource_id):
-    resource_tags = {}
-    if resource_id:
-        tags = aws.get_all_tags({'resource-id': resource_id})
-        for tag in tags:
-            # Tags starting with 'aws:' are reserved for internal use
-            if not tag.name.startswith('aws:'):
-                resource_tags[tag.name] = tag.value
-    return resource_tags
-
-
-# Define function to change resource tags
-def set_resource_tags(resource, tags):
-    for tag_key, tag_value in list(tags.items()):
-        if tag_key not in resource.tags or resource.tags[tag_key] != tag_value:
-            resource.add_tag(tag_key, tag_value)
-
-
 # Alright, let's start doing things
 # First, make a list of all the instances that match the tag criteria...
 instances = aws.get_only_instances(filters={'tag:' + tag_name: tag_value})
@@ -136,9 +117,8 @@ for instance in instances:
         # Create a new snapshot for each volume
         logging.info("%s/%s: Found volume, taking snapshot", instance.id, volume.id)
         try:
+            # Increase our "total processed" count
             count_total += 1
-            # Get the volume's tags
-            tags_volume = get_resource_tags(volume.id)
             # Set the snapshot description
             description = "AUTOSNAP: {0} ({1}) at {2}".format(
                 instance_name,
@@ -148,14 +128,12 @@ for instance in instances:
             try:
                 # Create snapshot (and store the ID)
                 current_snapshot = volume.create_snapshot(description)
-                # Give snapshot the same tags from its volume
-                set_resource_tags(current_snapshot, tags_volume)
-                # Give snapshot tag that indicates it's ours
-                set_resource_tags(current_snapshot, {"snapshot_type": tag_name})
+                # Give snapshot a tag that indicates it's ours
+                current_snapshot.add_tag("snapshot_type", "autosnap")
                 # Uses instance name for snapshot name
-                set_resource_tags(current_snapshot, {"Name": instance_name})
-                logging.info("%s/%s/%s: Snapshot created and tagged with \"%s\"",
-                             instance.id, volume.id, current_snapshot.id, tag_name)
+                current_snapshot.add_tag("Name", instance_name)
+                logging.info("%s/%s/%s: Snapshot created",
+                             instance.id, volume.id, current_snapshot.id)
                 total_creates += 1
             except Exception as e:
                 logging.error("%s/%s: Error while creating snapshot: %s",
