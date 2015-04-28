@@ -1,6 +1,6 @@
 aws-autosnap
 =================
-aws-autosnap is a python script to make it easy to *systematically snapshot any instances you wish*. 
+aws-autosnap is a python script to make it easy to *systematically snapshot any instances you wish*.
 
 Simply add a tag to each instance you want snapshots of, configure and install a cronjob for aws-autosnap and you are off. It will even handle cleaning old snapshots on a daily, weekly, or yearly basis so that you can setup the retention policy to suit.
 
@@ -28,3 +28,8 @@ Usage
 		30 1 * * 1-5 /path/to/autosnap.py day
 		30 2 * * 6 /path/to/autosnap.py week
 		30 3 1 * * /path/to/autosnap.py month
+
+
+Results
+==========
+When this script creates a snapshot, it will tag the snapshot with 'snapshot\_type:autosnap'. Later, when it is creating the list of snapshots to delete, it will only consider snapshots for a given volume if that tag is present. This allows you to make your own snapshots without having to worry about autosnap deleting them later (just make sure you don't tag it with 'snapshot_type:autosnap').
