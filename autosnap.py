@@ -124,7 +124,7 @@ instances = conn.get_only_instances(filters={'tag:' + tag_name: tag_value})
 # Iterate through each instance in the list
 for instance in instances:
     try:
-        keep_snapshots = int(instance.tags['autosnap_limit'])
+        keep_snapshots = int(instance.tags['autosnap_retention'])
         logging.info("%s: Found instance, keeping %s snapshots (set by instance tag)",
                      instance.id, keep_snapshots)
     except:
