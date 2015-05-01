@@ -122,16 +122,18 @@ for instance in instances:
             # Set the snapshot description
             description = "AUTOSNAP: {0} ({1}) at {2}".format(
                 instance_name,
-                volume.id,
+                volume.attach_data.device,
                 datetime.today().strftime('%d-%m-%Y %H:%M:%S')
             )
             try:
                 # Create snapshot (and store the ID)
                 current_snapshot = volume.create_snapshot(description)
-                # Give snapshot a tag that indicates it's ours
-                current_snapshot.add_tag("snapshot_type", "autosnap")
-                # Uses instance name for snapshot name
+                # Add some tags to the snapshot for identification
                 current_snapshot.add_tag("Name", instance_name)
+                current_snapshot.add_tag("snapshot_type", "autosnap")
+                current_snapshot.add_tag("instance-id", instance.id)
+                current_snapshot.add_tag("volume-id", volume.id)
+                current_snapshot.add_tag("mount-point", volume.attach_data.device)
                 logging.info("%s/%s/%s: Snapshot created",
                              instance.id, volume.id, current_snapshot.id)
                 total_creates += 1
