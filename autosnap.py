@@ -200,6 +200,9 @@ for instance in instances:
                 total_creates += 1  # increase our total success count
                 logging.info("%s/%s/%s: Snapshot created",
                              instance.id, volume.id, snapshot.id)
+            else:
+                logging.info("%s/%s: Snapshot skipped, last snapshot not old enough",
+                             instance.id, volume.id)
         except Exception as e:
             logging.info("%s/%s: Error creating snapshot for volume: %s",
                          instance.id, volume.id, e)
