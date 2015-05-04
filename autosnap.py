@@ -8,6 +8,7 @@ from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
 import boto.sns
 from datetime import datetime
+import time
 import sys
 import logging
 from config import config
@@ -96,6 +97,22 @@ def date_compare(snapshot1, snapshot2):
     return 1
 
 
+# Check if the latest snapshot is older than our specified frequency
+def frequency_check():
+    # Get a list of all the snapshots for our volume
+    snapshots = aws.get_all_snapshots(filters={
+        'volume-id': volume.id,
+        'tag:snapshot_type': 'autosnap'})
+    snapshots.sort(date_compare, reverse=True)  # Order our snapshots newest to oldest
+    current_time = time.mktime(time.gmtime())
+    snap_time = time.mktime(time.strptime(snapshots[0].start_time, "%Y-%m-%dT%H:%M:%S.000Z"))
+    # Compare with 5 minute buffer time
+    if (current_time - snap_time) > ((snapshot_frequency*60*60) - 300):
+        return True
+    else:
+        return False
+
+
 def create_snapshot():
     # Set the snapshot description
     description = "AUTOSNAP: {0} ({1}) at {2}".format(
@@ -110,6 +127,10 @@ def create_snapshot():
     snapshot.add_tag("instance-id", instance.id)
     snapshot.add_tag("volume-id", volume.id)
     snapshot.add_tag("mount-point", volume.attach_data.device)
+    if snapshot_frequency:
+        snapshot.add_tag("snapshot_frequency", snapshot_frequency)
+    else:
+        snapshot.add_tag("snapshot_frequency", "null")
     return snapshot
 
 
@@ -153,6 +174,14 @@ for instance in instances:
         logging.info("%s: Found instance, keeping %s snapshots (set globally)",
                      instance.id, keep_snapshots)
 
+    try:
+        # Check if the instance has it's snapshot frequency
+        snapshot_frequency = int(instance.tags['autosnap_frequency'])
+    except:
+        logging.info("%s: Warning: no \"snapshot_frequency\" tag found. Ignoring instance.",
+                     instance.id)
+        continue
+
     # Make a list of all volumes attached to this instance
     volumes = aws.get_all_volumes(filters={
         'attachment.instance-id': instance.id})
@@ -163,6 +192,17 @@ for instance in instances:
 
     for volume in volumes:
         count_processed += 1  # Increase our "total processed" count
+
+        try:
+            if frequency_check():
+                # Take snapshot if it's old enough
+                snapshot = create_snapshot()  # create the snapshot!
+                total_creates += 1  # increase our total success count
+                logging.info("%s/%s/%s: Snapshot created",
+                             instance.id, volume.id, snapshot.id)
+        except Exception as e:
+            logging.info("%s/%s: Error creating snapshot for volume: %s",
+                         instance.id, volume.id, e)
 
         # Clean up old snapshots
         try:
