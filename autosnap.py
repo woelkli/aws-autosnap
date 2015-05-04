@@ -22,9 +22,7 @@ total_creates = 0
 total_deletes = 0
 count_errors = 0
 count_success = 0
-count_total = 0
-# Init deletion list
-deletelist = []
+count_processed = 0
 
 
 # Setup logging
@@ -88,6 +86,56 @@ except:
     logging.info("Authenticating with IAM Role")
 
 
+# Define some functions
+def date_compare(snapshot1, snapshot2):
+    # Sort the delete list by snapshot age (oldest to newest)
+    if snapshot1.start_time < snapshot2.start_time:
+        return -1
+    elif snapshot1.start_time == snapshot2.start_time:
+        return 0
+    return 1
+
+
+def create_snapshot():
+    # Set the snapshot description
+    description = "AUTOSNAP: {0} ({1}) at {2}".format(
+        instance_name,
+        volume.attach_data.device,
+        datetime.today().strftime('%d-%m-%Y %H:%M:%S'))
+    # Create snapshot (and store the ID)
+    snapshot = volume.create_snapshot(description)
+    # Add some tags to the snapshot for identification
+    snapshot.add_tag("Name", instance_name)
+    snapshot.add_tag("snapshot_type", "autosnap")
+    snapshot.add_tag("instance-id", instance.id)
+    snapshot.add_tag("volume-id", volume.id)
+    snapshot.add_tag("mount-point", volume.attach_data.device)
+    return snapshot
+
+
+def clean_snapshots():
+    deletes = 0  # Init our local deletion counter
+    deletelist = []  # Make sure the delete list is blank!
+
+    # Make a list of snapshots for this instance that has our tag in it
+    snapshots = aws.get_all_snapshots(filters={
+        'volume-id': volume.id,
+        'tag:snapshot_type': 'autosnap'})
+    for snapshot in snapshots:
+        deletelist.append(snapshot)
+    deletelist.sort(date_compare)
+
+    # And trim off the latest X snapshots
+    delta = len(deletelist) - keep_snapshots
+    for deletesnap in range(delta):
+        snapshot = deletelist[deletesnap]
+        logging.info("%s/%s/%s: Deleting snapshot",
+                     instance.id, volume.id, snapshot.id)
+        snapshot.delete()  # Delete it
+        deletes += 1  # Increase our deletion counter
+    return deletes
+
+
 # Alright, let's start doing things
 # First, make a list of all the instances that match the tag criteria...
 instances = aws.get_only_instances(filters={'tag:' + tag_name: tag_value})
@@ -108,77 +156,24 @@ for instance in instances:
     # Make a list of all volumes attached to this instance
     volumes = aws.get_all_volumes(filters={
         'attachment.instance-id': instance.id})
-    if 'Name' in instance.tags:
+    try:
         instance_name = "{0}".format(instance.tags['Name'])
-    else:
+    except:
         instance_name = "{0}".format(instance.id)
 
     for volume in volumes:
-        # Create a new snapshot for each volume
-        logging.info("%s/%s: Found volume, taking snapshot", instance.id, volume.id)
+        count_processed += 1  # Increase our "total processed" count
+
+        # Clean up old snapshots
         try:
-            # Increase our "total processed" count
-            count_total += 1
-            # Set the snapshot description
-            description = "AUTOSNAP: {0} ({1}) at {2}".format(
-                instance_name,
-                volume.attach_data.device,
-                datetime.today().strftime('%d-%m-%Y %H:%M:%S')
-            )
-            try:
-                # Create snapshot (and store the ID)
-                current_snapshot = volume.create_snapshot(description)
-                # Add some tags to the snapshot for identification
-                current_snapshot.add_tag("Name", instance_name)
-                current_snapshot.add_tag("snapshot_type", "autosnap")
-                current_snapshot.add_tag("instance-id", instance.id)
-                current_snapshot.add_tag("volume-id", volume.id)
-                current_snapshot.add_tag("mount-point", volume.attach_data.device)
-                logging.info("%s/%s/%s: Snapshot created",
-                             instance.id, volume.id, current_snapshot.id)
-                total_creates += 1
-            except Exception as e:
-                logging.error("%s/%s: Error while creating snapshot: %s",
-                              instance.id, volume.id, e)
-                pass
-
-            # Ok, now that the new snapshot has started, let's clean up the old ones
-            # Make a list of snapshots for this instance that has our tag in it
-            snapshots = aws.get_all_snapshots(filters={
-                'volume-id': volume.id,
-                'tag:snapshot_type': 'autosnap'})
-            deletelist = []  # Make sure the delete list is blank!
-            for snapshot in snapshots:
-                deletelist.append(snapshot)
-
-            # Sort the delete list by snapshot age
-            def date_compare(snapshot1, snapshot2):
-                if snapshot1.start_time < snapshot2.start_time:
-                    return -1
-                elif snapshot1.start_time == snapshot2.start_time:
-                    return 0
-                return 1
-            deletelist.sort(date_compare)
-
-            # And trim off the latest X snapshots
-            delta = len(deletelist) - keep_snapshots
-            for deletesnap in range(delta):
-                snapshot = deletelist[deletesnap]
-                logging.info("%s/%s/%s: Deleting snapshot (%s)",
-                             instance.id, volume.id, snapshot.id, snapshot.start_time)
-                snapshot.delete()  # Delete it
-                total_deletes += 1  # Increase our deletion counter
-
+            total_deletes += clean_snapshots()  # Do it, and add deletes to global counter
         except Exception as e:
-            logging.error("%s/%s: Error processing volume: %s",
-                          instance.id, volume.id, e)
-            errmsg += "{0}:{1}: Error processing volume: {2}".format(instance.id, volume.id, e)
-            count_errors += 1
-        else:
-            count_success += 1
+            logging.info("%s/%s: Error cleaning old snapshots for volume: %s",
+                         instance.id, volume.id, e)
+
 
 # Finish up the log file...
-logging.info('Finished processing snapshots')
+logging.info("Finished processing snapshots")
 logging.info("Total snapshots created/deleted/errors: %s/%s/%s",
              str(total_creates), str(total_deletes), str(count_errors))
 
