@@ -166,13 +166,9 @@ for instance in instances:
     try:
         # Check if the instance has a retention override tag
         keep_snapshots = int(instance.tags['autosnap_retention'])
-        logging.info("%s: Found instance, keeping %s snapshots (set by instance tag)",
-                     instance.id, keep_snapshots)
     except:
         # Otherwise, set it to the global setting
         keep_snapshots = config['keep_snapshots']
-        logging.info("%s: Found instance, keeping %s snapshots (set globally)",
-                     instance.id, keep_snapshots)
 
     try:
         # Check if the instance has it's snapshot frequency
@@ -201,7 +197,7 @@ for instance in instances:
                 logging.info("%s/%s/%s: Snapshot created",
                              instance.id, volume.id, snapshot.id)
             else:
-                logging.info("%s/%s: Snapshot skipped, last snapshot not old enough",
+                logging.info("%s/%s: Skipping volume, last snapshot not old enough",
                              instance.id, volume.id)
         except Exception as e:
             logging.info("%s/%s: Error creating snapshot for volume: %s",
