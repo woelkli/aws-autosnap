@@ -124,9 +124,9 @@ def create_snapshot():
     # Add some tags to the snapshot for identification
     snapshot.add_tag("Name", instance_name)
     snapshot.add_tag("snapshot_type", "autosnap")
-    snapshot.add_tag("instance-id", instance.id)
-    snapshot.add_tag("volume-id", volume.id)
-    snapshot.add_tag("mount-point", volume.attach_data.device)
+    snapshot.add_tag("instance_id", instance.id)
+    snapshot.add_tag("volume_id", volume.id)
+    snapshot.add_tag("mount_point", volume.attach_data.device)
     if snapshot_frequency:
         snapshot.add_tag("snapshot_frequency", snapshot_frequency)
     else:
