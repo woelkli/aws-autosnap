@@ -178,7 +178,7 @@ for instance in instances:
         # Check if the instance has it's snapshot frequency
         snapshot_frequency = int(instance.tags['autosnap_frequency'])
     except:
-        logging.info("%s: Warning: no \"snapshot_frequency\" tag found. Ignoring instance.",
+        logging.info("%s: Warning: no \"autosnap_frequency\" tag found. Ignoring instance.",
                      instance.id)
         continue
 
