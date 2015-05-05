@@ -2,6 +2,9 @@ config = {
 
     # Optional settings are commented out
 
+    # set 'dry_run' to any value to disable autosnap from actually taking/deleting snapshots
+    #'dry_run': 'true',
+
     # AWS credentials (remove if using an EC2 instance with an IAM role)
     'aws_access_key': 'xxxxxxxx',
     'aws_secret_key': 'xxxxxxxxxxxx',

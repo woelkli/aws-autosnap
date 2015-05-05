@@ -205,10 +205,15 @@ for instance in instances:
         try:
             if frequency_check():
                 # Take snapshot if it's old enough
-                snapshot = create_snapshot()  # create the snapshot!
+                try:
+                    config['dry_run']  # but not if we're doing a dry run
+                    logging.info("%s/%s: Snapshot created (%s)",
+                                 instance.id, volume.id, instance_name)
+                except:
+                    snapshot = create_snapshot()  # create the snapshot!
+                    logging.info("%s/%s/%s: Snapshot created (%s)",
+                                 instance.id, volume.id, snapshot.id, instance_name)
                 total_creates += 1  # increase our total success count
-                logging.info("%s/%s/%s: Snapshot created (%s)",
-                             instance.id, volume.id, snapshot.id, instance_name)
             else:
                 logging.info("%s/%s: Skipping volume, last snapshot not old enough (%s)",
                              instance.id, volume.id, instance_name)
@@ -218,7 +223,10 @@ for instance in instances:
 
         # Clean up old snapshots
         try:
-            total_deletes += clean_snapshots()  # Do it, and add deletes to global counter
+            try:
+                config['dry_run']  # but not if we're doing a dry run
+            except:
+                total_deletes += clean_snapshots()  # Do it, and add deletes to global counter
         except Exception as e:
             logging.info("%s/%s: Error cleaning old snapshots for volume: %s",
                          instance.id, volume.id, e)
