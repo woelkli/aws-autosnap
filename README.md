@@ -31,8 +31,7 @@ If you'd like to use SNS notifications, create an SNS topic in your AWS account 
 ### Configuration
 1. First, create a `config.py` in the script's directory (use config.sample for reference).
 2. For each instance that you want to snapshot, add the following tags:
-  * (required) `autosnap:true`: indicates to autosnap to snapshot this instance (you can override the default tag name/value in your config file).
-  * (required) `autosnap_frequency:X`: how often (in hours) you want this instance to be snapshotted.
+  * (required) `autosnap:X`: how often (in hours) you want this instance to be snapshotted (tag name can be changed in `config.py`)
   * (optional) `autosnap_retention:X`: how many snapshots you want to keep (if not specified, it will use the value in `config.py`.
 3. (optional) Tag any _volumes_ that you don't want to snapshot with `autsnap_ignore`. The tag's value doesn't matter (it can be blank).
 
@@ -41,4 +40,4 @@ You can schedule this script to run on a regular basis. Make sure it's set to ru
 
 
 ### Results
-When this script creates a snapshot, it will tag the snapshot with 'snapshot\_type:autosnap' (along with some other useful tags). Later, when it is creating the list of snapshots to delete, it will only consider snapshots for a given volume if that tag is present. This allows you to make your own snapshots without having to worry about autosnap deleting them later (just make sure you don't tag it with 'snapshot_type:autosnap').
+When this script creates a snapshot, it will tag the snapshot with `snapshot_type:autosnap` (or whatever `tag_name` is set to in `config.py`), along with some other useful tags. Later, when it is creating the list of snapshots to delete, it will only consider snapshots for a given volume if that tag is present. This allows you to make your own snapshots without having to worry about autosnap deleting them later (just make sure you don't tag it with 'snapshot_type:autosnap').

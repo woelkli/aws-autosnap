@@ -53,7 +53,6 @@ sns_arn = config.get('sns_arn')
 proxyHost = config.get('proxyHost')
 proxyPort = config.get('proxyPort')
 tag_name = config['tag_name']
-tag_value = config['tag_value']
 region = RegionInfo(name=ec2_region_name, endpoint=ec2_region_endpoint)
 
 
@@ -139,7 +138,7 @@ def create_snapshot():
     snapshot = volume.create_snapshot(description)
     # Add some tags to the snapshot for identification
     snapshot.add_tag("Name", instance_name)
-    snapshot.add_tag("snapshot_type", "autosnap")
+    snapshot.add_tag("snapshot_type", tag_name)
     snapshot.add_tag("instance_id", instance.id)
     snapshot.add_tag("volume_id", volume.id)
     snapshot.add_tag("mount_point", volume.attach_data.device)
@@ -173,11 +172,18 @@ def clean_snapshots():
 
 
 # Alright, let's start doing things
-# First, make a list of all the instances that match the tag criteria...
-instances = aws.get_only_instances(filters={'tag:' + tag_name: tag_value})
+# First, make a list of all our instances
+instances = aws.get_only_instances()
 
 # ...and do things for each one.
 for instance in instances:
+    try:
+        # Check if the instance has our tag, and get the frequency from it
+        snapshot_frequency = int(instance.tags[tag_name])
+    except:
+        # If not, skip to the next instance
+        continue
+
     try:
         # Check if the instance has a retention override tag
         keep_snapshots = int(instance.tags['autosnap_retention'])
@@ -191,14 +197,6 @@ for instance in instances:
     except:
         # Or set it to the instance ID if it doesn't exist
         instance_name = "{0}".format(instance.id)
-
-    try:
-        # Check if the instance has it's snapshot frequency
-        snapshot_frequency = int(instance.tags['autosnap_frequency'])
-    except:
-        logging.info("%s: Warning: no \"autosnap_frequency\" tag found. Ignoring instance %s.",
-                     instance.id, instance_name)
-        continue
 
     # Make a list of all volumes attached to this instance
     volumes = aws.get_all_volumes(filters={

@@ -15,7 +15,6 @@ config = {
 
     # Name of the intance tag autosnap should look for
     'tag_name': 'autosnap',
-    'tag_value': 'true',
 
     # Number of snapshots to keep
     'keep_snapshots': 7,
