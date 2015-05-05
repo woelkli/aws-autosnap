@@ -16,7 +16,7 @@ Usage
 2. (optional) Create a SNS topic in AWS and copy the ARN into the config file
 3. (optional) Subscribe with a email address to the SNS topic
 4. Create either an IAM user or EC2 instance role to authenticate with AWS.
-  * If using an IAM user, you must set the access and secret keys in the config file.
+  * If using an IAM user, you must set the access and secret keys in the config file, or as [environment variables](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment).
   * Attach a security policy for this user/role (see the [sample IAM policy](iam.policy.sample)).
 5. Create `config.py` in the script's directory (use config.sample for reference).
 6. For each instance that you want to snapshot, add the following tags:
@@ -24,7 +24,6 @@ Usage
   * (required) `autosnap_frequency:X`: how often (in hours) you want this instance to be snapshotted.
   * (optional) `autosnap_retention:X`: how many snapshots you want to keep (if not specified, it will use the value in `config.py`).
 7. (optional, but recommended) schedule this script to run on a frequent basis (at least as often as the lowest value of `autosnap_frequency`). E.g. if you have some instances you want to snapshot hourly, and some you want to snapshot daily, run the script hourly, and set the `autosnap_frequency` for each instance to either 1 or 24. Autosnap will only snapshot an instance if at least X hours have passed since the last snapshot it's taken (where X = `autosnap_frequency`).
-
 
 Results
 ==========
