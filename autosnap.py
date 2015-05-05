@@ -20,10 +20,11 @@ from os import environ
 message = ""
 errmsg = ""
 # Init count variables
-total_creates = 0
-total_deletes = 0
+count_creates = 0
+count_deletes = 0
 count_errors = 0
 count_success = 0
+count_ignores = 0
 count_processed = 0
 
 
@@ -38,7 +39,11 @@ console = logging.StreamHandler(sys.stdout)
 console.setLevel(logging.INFO)
 logging.getLogger('').addHandler(console)
 # Start log
-logging.info("Initializing snapshot process")
+try:
+    config['dry_run']
+    logging.info("Initializing snapshot dry run")
+except:
+    logging.info("Initializing snapshot process")
 
 
 # Get settings from config.py
@@ -160,8 +165,8 @@ def clean_snapshots():
     delta = len(deletelist) - keep_snapshots
     for deletesnap in range(delta):
         snapshot = deletelist[deletesnap]
-        logging.info("%s/%s/%s: Deleting snapshot (%s)",
-                     instance.id, volume.id, snapshot.id, instance_name)
+        logging.info("%s/%s/%s: Deleting snapshot (%s on %s)",
+                     instance.id, volume.id, snapshot.id, volume.attach_data.device, instance_name)
         snapshot.delete()  # Delete it
         deletes += 1  # Increase our deletion counter
     return deletes
@@ -205,7 +210,7 @@ for instance in instances:
         try:
             # Ignore volumes tagged with 'autosnap_ignore' from that list
             volume.tags['autosnap_ignore']
-            logging.info("%s/%s: Ignoring volume,\'autosnap_ignore\' tag present (%s on %s) ",
+            logging.info("%s/%s: Ignoring volume, \'autosnap_ignore\' tag present (%s on %s) ",
                          instance.id, volume.id, volume.attach_data.device, instance_name)
             count_ignores += 1  # Increase our "total ignored" counter
             continue
@@ -217,16 +222,20 @@ for instance in instances:
                 # Take snapshot if it's old enough
                 try:
                     config['dry_run']  # but not if we're doing a dry run
-                    logging.info("%s/%s: Snapshot created (%s)",
-                                 instance.id, volume.id, instance_name)
+                    logging.info("%s/%s: Creating snapshot (%s on %s)",
+                                 instance.id, volume.id, volume.attach_data.device, instance_name)
                 except:
                     snapshot = create_snapshot()  # create the snapshot!
-                    logging.info("%s/%s/%s: Snapshot created (%s)",
-                                 instance.id, volume.id, snapshot.id, instance_name)
-                total_creates += 1  # increase our total success count
+                    logging.info("%s/%s/%s: Creating snapshot (%s on %s)",
+                                 instance.id,
+                                 volume.id,
+                                 snapshot.id,
+                                 volume.attach_data.device,
+                                 instance_name)
+                count_creates += 1  # increase our total success count
             else:
-                logging.info("%s/%s: Skipping volume, last snapshot not old enough (%s)",
-                             instance.id, volume.id, instance_name)
+                logging.info("%s/%s: Skipping volume, last snapshot not old enough (%s on %s)",
+                             instance.id, volume.id, volume.attach_data.device, instance_name)
         except Exception as e:
             logging.info("%s/%s: Error creating snapshot for volume: %s",
                          instance.id, volume.id, e)
@@ -236,7 +245,7 @@ for instance in instances:
             try:
                 config['dry_run']  # but not if we're doing a dry run
             except:
-                total_deletes += clean_snapshots()  # Do it, and add deletes to global counter
+                count_deletes += clean_snapshots()  # Do it, and add deletes to global counter
         except Exception as e:
             logging.info("%s/%s: Error cleaning old snapshots for volume: %s",
                          instance.id, volume.id, e)
@@ -244,8 +253,11 @@ for instance in instances:
 
 # Finish up the log file...
 logging.info("Finished processing snapshots")
-logging.info("Total snapshots created/deleted/errors: %s/%s/%s",
-             str(total_creates), str(total_deletes), str(count_errors))
+logging.info("Total snapshots processed: %s", str(count_processed))
+logging.info("Total snapshots created: %s", str(count_creates))
+logging.info("Total snapshots deleted: %s", str(count_deletes))
+logging.info("Total snapshots ignored: %s", str(count_ignores))
+logging.info("Total errors: %s", str(count_errors))
 
 # Report outcome to SNS (if configured)
 if sns_arn:
