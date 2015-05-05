@@ -106,10 +106,7 @@ def date_compare(snapshot1, snapshot2):
 
 # Check if the latest snapshot is older than our specified frequency
 def frequency_check():
-    # Get a list of all the snapshots for our volume
-    snapshots = aws.get_all_snapshots(filters={
-        'volume-id': volume.id,
-        'tag:snapshot_type': 'autosnap'})
+    snapshots = get_snapshots(volume)  # Get a list of all the snapshots for our volume
     snapshots.sort(date_compare, reverse=True)  # Order our snapshots newest to oldest
     current_time = time.mktime(time.gmtime())
     snap_time = time.mktime(time.strptime(snapshots[0].start_time, "%Y-%m-%dT%H:%M:%S.000Z"))
@@ -118,6 +115,13 @@ def frequency_check():
         return True
     else:
         return False
+
+
+def get_snapshots(volume):
+    snapshots = aws.get_all_snapshots(filters={
+        'volume-id': volume.id,
+        'tag:snapshot_type': 'autosnap'})
+    return snapshots
 
 
 def create_snapshot():
@@ -145,10 +149,9 @@ def clean_snapshots():
     deletes = 0  # Init our local deletion counter
     deletelist = []  # Make sure the delete list is blank!
 
-    # Make a list of snapshots for this instance that has our tag in it
-    snapshots = aws.get_all_snapshots(filters={
-        'volume-id': volume.id,
-        'tag:snapshot_type': 'autosnap'})
+    # Make a new list of snapshots for this instance that has our tag in it
+    snapshots = get_snapshots(volume)
+
     for snapshot in snapshots:
         deletelist.append(snapshot)
     deletelist.sort(date_compare)
