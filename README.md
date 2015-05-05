@@ -16,7 +16,7 @@ Usage
 2. (optional) Create a SNS topic in AWS and copy the ARN into the config file
 3. (optional) Subscribe with a email address to the SNS topic
 4. Create either an IAM user or role to authenticate.
-  * If using an IAM user, you must set the access and secret keys in either the config file, or as env variables
+  * If using an IAM user, you must set the access and secret keys in either the config file, or as [environment variables](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment).
   * Attach a security policy for this user/role (see the iam.policy.sample)
 5. Create config.py in the script's directory (use config.samle for reference).
 6. For each instance that you want to snapshot, add the tag/value specified in your config.py.

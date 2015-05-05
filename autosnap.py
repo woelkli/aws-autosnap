@@ -12,6 +12,7 @@ import time
 import sys
 import logging
 from config import config
+from os import environ
 
 
 # Let's initialize some stuff to use later...
@@ -54,8 +55,14 @@ region = RegionInfo(name=ec2_region_name, endpoint=ec2_region_endpoint)
 # Set up our AWS and SNS connection objects
 try:
     # Try to load user-specified access keys (if they exist)
-    aws_access_key = config['aws_access_key']
-    aws_secret_key = config['aws_secret_key']
+    try:
+        # From environment variables
+        aws_access_key = environ['AWS_ACCESS_KEY_ID']
+        aws_secret_key = environ['AWS_SECRET_ACCESS_KEY']
+    except:
+        # Or from the config file (if ENV don't exist)
+        aws_access_key = config['aws_access_key']
+        aws_secret_key = config['aws_secret_key']
     if proxyHost:
         # Did the user specify proxy settings?
         aws = EC2Connection(aws_access_key, aws_secret_key, region=region,
