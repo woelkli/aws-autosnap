@@ -203,6 +203,16 @@ for instance in instances:
         count_processed += 1  # Increase our "total processed" count
 
         try:
+            # Ignore volumes tagged with 'autosnap_ignore' from that list
+            volume.tags['autosnap_ignore']
+            logging.info("%s/%s: Ignoring volume,\'autosnap_ignore\' tag present (%s on %s) ",
+                         instance.id, volume.id, volume.attach_data.device, instance_name)
+            count_ignores += 1  # Increase our "total ignored" counter
+            continue
+        except:
+            pass
+
+        try:
             if frequency_check():
                 # Take snapshot if it's old enough
                 try:

@@ -23,7 +23,8 @@ Usage
   * (required) `autosnap:true`: indicates to autosnap to snapshot this instance (a custom `tag_name` and `tag_value` can be set in `config.py`).
   * (required) `autosnap_frequency:X`: how often (in hours) you want this instance to be snapshotted.
   * (optional) `autosnap_retention:X`: how many snapshots you want to keep (if not specified, it will use the value in `config.py`).
-7. (optional, but recommended) schedule this script to run on a frequent basis (at least as often as the lowest value of `autosnap_frequency`). E.g. if you have some instances you want to snapshot hourly, and some you want to snapshot daily, run the script hourly, and set the `autosnap_frequency` for each instance to either 1 or 24. Autosnap will only snapshot an instance if at least X hours have passed since the last snapshot it's taken (where X = `autosnap_frequency`).
+7. (optional) Tag any _volumes_ that you don't want to snapshot with 'autsnap_ignore'. The tag's value doesn't matter (it can be blank).
+8. (optional, but recommended) schedule this script to run on a frequent basis (at least as often as the lowest value of `autosnap_frequency`). E.g. if you have some instances you want to snapshot hourly, and some you want to snapshot daily, run the script hourly, and set the `autosnap_frequency` for each instance to either 1 or 24. Autosnap will only snapshot an instance if at least X hours have passed since the last snapshot it's taken (where X = `autosnap_frequency`).
 
 Results
 ==========
