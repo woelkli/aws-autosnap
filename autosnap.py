@@ -150,8 +150,8 @@ def clean_snapshots():
     delta = len(deletelist) - keep_snapshots
     for deletesnap in range(delta):
         snapshot = deletelist[deletesnap]
-        logging.info("%s/%s/%s: Deleting snapshot",
-                     instance.id, volume.id, snapshot.id)
+        logging.info("%s/%s/%s: Deleting snapshot (%s)",
+                     instance.id, volume.id, snapshot.id, instance_name)
         snapshot.delete()  # Delete it
         deletes += 1  # Increase our deletion counter
     return deletes
@@ -171,20 +171,23 @@ for instance in instances:
         keep_snapshots = config['keep_snapshots']
 
     try:
+        # Get instance's Name tag
+        instance_name = "{0}".format(instance.tags['Name'])
+    except:
+        # Or set it to the instance ID if it doesn't exist
+        instance_name = "{0}".format(instance.id)
+
+    try:
         # Check if the instance has it's snapshot frequency
         snapshot_frequency = int(instance.tags['autosnap_frequency'])
     except:
-        logging.info("%s: Warning: no \"autosnap_frequency\" tag found. Ignoring instance.",
-                     instance.id)
+        logging.info("%s: Warning: no \"autosnap_frequency\" tag found. Ignoring instance %s.",
+                     instance.id, instance_name)
         continue
 
     # Make a list of all volumes attached to this instance
     volumes = aws.get_all_volumes(filters={
         'attachment.instance-id': instance.id})
-    try:
-        instance_name = "{0}".format(instance.tags['Name'])
-    except:
-        instance_name = "{0}".format(instance.id)
 
     for volume in volumes:
         count_processed += 1  # Increase our "total processed" count
@@ -194,11 +197,11 @@ for instance in instances:
                 # Take snapshot if it's old enough
                 snapshot = create_snapshot()  # create the snapshot!
                 total_creates += 1  # increase our total success count
-                logging.info("%s/%s/%s: Snapshot created",
-                             instance.id, volume.id, snapshot.id)
+                logging.info("%s/%s/%s: Snapshot created (%s)",
+                             instance.id, volume.id, snapshot.id, instance_name)
             else:
-                logging.info("%s/%s: Skipping volume, last snapshot not old enough",
-                             instance.id, volume.id)
+                logging.info("%s/%s: Skipping volume, last snapshot not old enough (%s)",
+                             instance.id, volume.id, instance_name)
         except Exception as e:
             logging.info("%s/%s: Error creating snapshot for volume: %s",
                          instance.id, volume.id, e)
