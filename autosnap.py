@@ -258,12 +258,12 @@ for instance in instances:
 
 # Finish up the log file...
 logging.info("Finished processing snapshots")
-logging.info("Total volumes processed: %s", str(count_processed))
-logging.info("Total volumes ignored: %s", str(count_ignores))
-logging.info("Total volumes skipped: %s", str(count_skips))
-logging.info("Total snapshots created: %s", str(count_creates))
-logging.info("Total snapshots deleted: %s", str(count_deletes))
-logging.info("Total errors: %s", str(count_errors))
+logging.info("Volumes processed: %s", str(count_processed))
+logging.info("Volumes ignored: %s", str(count_ignores))
+logging.info("Volumes skipped: %s", str(count_skips))
+logging.info("Snapshots created: %s", str(count_creates))
+logging.info("Snapshots deleted: %s", str(count_deletes))
+logging.info("Errors: %s", str(count_errors))
 
 # Report outcome to SNS (if configured)
 if sns_arn:
