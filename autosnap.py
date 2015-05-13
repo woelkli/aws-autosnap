@@ -25,6 +25,7 @@ count_deletes = 0
 count_errors = 0
 count_success = 0
 count_ignores = 0
+count_skips = 0
 count_processed = 0
 
 
@@ -111,14 +112,17 @@ def date_compare(snapshot1, snapshot2):
 # Check if the latest snapshot is older than our specified frequency
 def frequency_check():
     snapshots = get_snapshots(volume)  # Get a list of all the snapshots for our volume
-    snapshots.sort(date_compare, reverse=True)  # Order our snapshots newest to oldest
-    current_time = time.mktime(time.gmtime())
-    snap_time = time.mktime(time.strptime(snapshots[0].start_time, "%Y-%m-%dT%H:%M:%S.000Z"))
-    # Compare with 5 minute buffer time
-    if (current_time - snap_time) > ((snapshot_frequency*60*60) - 300):
+    if not snapshots:  # Snapshot if there are no existing snapshots
         return True
-    else:
-        return False
+    else:  # If there are, check how old the last one is.
+        snapshots.sort(date_compare, reverse=True)  # Order our snapshots newest to oldest
+        current_time = time.mktime(time.gmtime())
+        snap_time = time.mktime(time.strptime(snapshots[0].start_time, "%Y-%m-%dT%H:%M:%S.000Z"))
+        # Compare with 5 minute buffer time
+        if (current_time - snap_time) > ((snapshot_frequency*60*60) - 300):
+            return True
+        else:
+            return False
 
 
 def get_snapshots(volume):
@@ -234,9 +238,11 @@ for instance in instances:
             else:
                 logging.info("%s/%s: Skipping volume, last snapshot not old enough (%s on %s)",
                              instance.id, volume.id, volume.attach_data.device, instance_name)
+                count_skips += 1  # increase our total skip count
         except Exception as e:
             logging.info("%s/%s: Error creating snapshot for volume: %s",
                          instance.id, volume.id, e)
+            count_errors += 1
 
         # Clean up old snapshots
         try:
@@ -247,15 +253,17 @@ for instance in instances:
         except Exception as e:
             logging.info("%s/%s: Error cleaning old snapshots for volume: %s",
                          instance.id, volume.id, e)
+            count_errors += 1
 
 
 # Finish up the log file...
 logging.info("Finished processing snapshots")
-logging.info("Total snapshots processed: %s", str(count_processed))
-logging.info("Total snapshots created: %s", str(count_creates))
-logging.info("Total snapshots deleted: %s", str(count_deletes))
-logging.info("Total snapshots ignored: %s", str(count_ignores))
-logging.info("Total errors: %s", str(count_errors))
+logging.info("Volumes processed: %s", str(count_processed))
+logging.info("Volumes ignored: %s", str(count_ignores))
+logging.info("Volumes skipped: %s", str(count_skips))
+logging.info("Snapshots created: %s", str(count_creates))
+logging.info("Snapshots deleted: %s", str(count_deletes))
+logging.info("Errors: %s", str(count_errors))
 
 # Report outcome to SNS (if configured)
 if sns_arn:
