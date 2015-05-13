@@ -25,6 +25,7 @@ count_deletes = 0
 count_errors = 0
 count_success = 0
 count_ignores = 0
+count_skips = 0
 count_processed = 0
 
 
@@ -237,6 +238,7 @@ for instance in instances:
             else:
                 logging.info("%s/%s: Skipping volume, last snapshot not old enough (%s on %s)",
                              instance.id, volume.id, volume.attach_data.device, instance_name)
+                count_skips += 1  # increase our total skip count
         except Exception as e:
             logging.info("%s/%s: Error creating snapshot for volume: %s",
                          instance.id, volume.id, e)
@@ -256,10 +258,11 @@ for instance in instances:
 
 # Finish up the log file...
 logging.info("Finished processing snapshots")
-logging.info("Total snapshots processed: %s", str(count_processed))
+logging.info("Total volumes processed: %s", str(count_processed))
+logging.info("Total volumes ignored: %s", str(count_ignores))
+logging.info("Total volumes skipped: %s", str(count_skips))
 logging.info("Total snapshots created: %s", str(count_creates))
 logging.info("Total snapshots deleted: %s", str(count_deletes))
-logging.info("Total snapshots ignored: %s", str(count_ignores))
 logging.info("Total errors: %s", str(count_errors))
 
 # Report outcome to SNS (if configured)
