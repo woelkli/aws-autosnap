@@ -29,3 +29,6 @@ pip-log.txt
 /config.pyc
 /config.py
 /iam.policy
+
+# Virtualenv
+.env*
