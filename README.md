@@ -11,7 +11,9 @@ Features:
 
 
 ## Requirements
-This script should work with either Python 2.7 or 3.X. Just run `pip install -r requirements.txt` in install these dependencies.
+This script currently works only in Python 2.7. Python 3.x support is under development. 
+
+Run `pip install -r requirements.txt` in install these dependencies:
 
 * [Boto](https://github.com/boto/boto) >= 2.38.0
 * [Future](https://pypi.python.org/pypi/future) >= 0.14.3
