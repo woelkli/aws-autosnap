@@ -237,6 +237,7 @@ for instance in instances:
         except Exception as e:
             logging.info("%s/%s: Error creating snapshot for volume: %s",
                          instance.id, volume.id, e)
+            count_errors += 1
 
         # Clean up old snapshots
         try:
@@ -247,6 +248,7 @@ for instance in instances:
         except Exception as e:
             logging.info("%s/%s: Error cleaning old snapshots for volume: %s",
                          instance.id, volume.id, e)
+            count_errors += 1
 
 
 # Finish up the log file...
