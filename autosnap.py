@@ -111,14 +111,17 @@ def date_compare(snapshot1, snapshot2):
 # Check if the latest snapshot is older than our specified frequency
 def frequency_check():
     snapshots = get_snapshots(volume)  # Get a list of all the snapshots for our volume
-    snapshots.sort(date_compare, reverse=True)  # Order our snapshots newest to oldest
-    current_time = time.mktime(time.gmtime())
-    snap_time = time.mktime(time.strptime(snapshots[0].start_time, "%Y-%m-%dT%H:%M:%S.000Z"))
-    # Compare with 5 minute buffer time
-    if (current_time - snap_time) > ((snapshot_frequency*60*60) - 300):
+    if not snapshots:  # Snapshot if there are no existing snapshots
         return True
-    else:
-        return False
+    else:  # If there are, check how old the last one is.
+        snapshots.sort(date_compare, reverse=True)  # Order our snapshots newest to oldest
+        current_time = time.mktime(time.gmtime())
+        snap_time = time.mktime(time.strptime(snapshots[0].start_time, "%Y-%m-%dT%H:%M:%S.000Z"))
+        # Compare with 5 minute buffer time
+        if (current_time - snap_time) > ((snapshot_frequency*60*60) - 300):
+            return True
+        else:
+            return False
 
 
 def get_snapshots(volume):
