@@ -22,7 +22,7 @@ You'll need to give autosnap the correct permissions on your AWS account in orde
 If you'd like to use SNS notifications, create an SNS topic in your AWS account and pass in the ARN in the config file, or as environment variable `AUTOSNAP_SNS_ARN`.
 
 ### Configuration & Run
-All the configuration parameter can be *override* by passing environment variables(variable name is the uppercase same variable name with a prefix `AUTOSNAP_`.e.g.`AUTOSNAP_LOG_FILE`)
+All the configuration parameters can be *overrided* by passing environment variables. The variable naming convention is as follows, AUTOSNAP_{VARIABLE_NAME}. So, for example AUTOSNAP_LOG_FILE.
 #### Examples
 1. Run with SNS enabled
 	```docker run -d --name ebs-snapshot-service -e AWS_ACCESS_KEY_ID=[CHANGE_ME] -e AWS_SECRET_ACCESS_KEY=[CHANGE_ME] -e AUTOSNAP_SNS_ARN=[CHANGE_ME] lhan/ebs-snapshot-service```
@@ -35,7 +35,7 @@ For each _instance_ or _volumes_ that you want to snapshot, add the following ta
   * (optional) `autosnap_retention:X`: how many snapshots you want to keep (if not specified, it will use the value in `config.py`.
   * (optional) Tag any _volumes_ that you don't want to snapshot with `autsnap_ignore`. The tag's value doesn't matter (it can be blank).
   
-  **PLESE NOTE: _volumes_ setting will *override* _instance_ setting**
+  **PLEASE NOTE: _volume_ settings will *override* _instance_ settings**
 
 
 ### Results
