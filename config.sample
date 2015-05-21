@@ -20,7 +20,7 @@ config = {
     'keep_snapshots': 7,
 
     # Path where you want to save the log
-    'log_file': 'autosnap.log',
+    'log_file': '/var/log/autosnap.log',
 
     # ARN of the SNS topic (optional)
     #'sns_arn': 'xxxxxxxxxx',

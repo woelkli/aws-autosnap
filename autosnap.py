@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # (c) 2012/2014 E.M. van Nuil / Oblivion b.v.
-# Update 2015 by Zach Himsel
+# Update 2015 by Lu Han
 
 # Load our dependent libraries
 from boto.ec2.connection import EC2Connection
@@ -13,12 +13,12 @@ import sys
 import logging
 from config import config
 from os import environ
+import StringIO
 
 
 # Let's initialize some stuff to use later...
 # Init message to return result via SNS
-message = ""
-errmsg = ""
+errmsg = False
 # Init count variables
 count_creates = 0
 count_deletes = 0
@@ -28,34 +28,54 @@ count_ignores = 0
 count_skips = 0
 count_processed = 0
 
+# A wrapper function to first retrieve from ENV then config.py
+#   ENV naming convention: AUTOSNAP_[SUPPORT_CONFIG_PARM]
+def get_config(key):
+    try:
+        envKey = 'AUTOSNAP_' + key.upper()
+        value = environ[envKey]
+    except:
+        value = config.get(key)
+    return value
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(message)s',
                     datefmt='%y-%m-%d %H:%M',
-                    filename=config['log_file'],
+                    filename=get_config('log_file'),
                     filemode='a')
+logger = logging.getLogger('') 
 # Set up log stream to mirror to stdout
 console = logging.StreamHandler(sys.stdout)
 console.setLevel(logging.INFO)
-logging.getLogger('').addHandler(console)
+logger.addHandler(console)
+
+
+
 # Start log
-try:
-    config['dry_run']
+if get_config('dry_run') is not None:
+    
     logging.info("Initializing snapshot dry run")
-except:
+else:
     logging.info("Initializing snapshot process")
 
 
 # Get settings from config.py
-ec2_region_name = config['ec2_region_name']
-ec2_region_endpoint = config['ec2_region_endpoint']
-sns_arn = config.get('sns_arn')
-proxyHost = config.get('proxyHost')
-proxyPort = config.get('proxyPort')
-tag_name = config['tag_name']
+ec2_region_name = get_config('ec2_region_name')
+ec2_region_endpoint = get_config('ec2_region_endpoint')
+sns_arn = get_config('sns_arn')
+proxyHost = get_config('proxyHost')
+proxyPort = get_config('proxyPort')
+tag_name = get_config('tag_name')
 region = RegionInfo(name=ec2_region_name, endpoint=ec2_region_endpoint)
 
+# Set up sns stream (if configed)
+if sns_arn:
+    snsStream = StringIO.StringIO()
+    snsConsole = logging.StreamHandler(snsStream)
+    snsConsole.setLevel(logging.DEBUG)
+    logger.addHandler(snsConsole)
 
 # Set up our AWS and SNS connection objects
 try:
@@ -181,19 +201,23 @@ instances = aws.get_only_instances()
 
 # ...and do things for each one.
 for instance in instances:
+    snapshot_frequency = None
+    instance_snapshot_frequency = None
+    keep_snapshots = None
+    instance_name = None
     try:
         # Check if the instance has our tag, and get the frequency from it
-        snapshot_frequency = int(instance.tags[tag_name])
+        instance_snapshot_frequency = int(instance.tags[tag_name])
     except:
-        # If not, skip to the next instance
-        continue
+        # If not, check each volumn setting
+        pass
 
     try:
         # Check if the instance has a retention override tag
         keep_snapshots = int(instance.tags['autosnap_retention'])
     except:
         # Otherwise, set it to the global setting
-        keep_snapshots = config['keep_snapshots']
+        keep_snapshots = get_config('keep_snapshots')
 
     try:
         # Get instance's Name tag
@@ -207,8 +231,32 @@ for instance in instances:
         'attachment.instance-id': instance.id})
 
     for volume in volumes:
-        count_processed += 1  # Increase our "total processed" count
+        vol_snapshot_frequency = None
+        vol_keep_snapshots = None
+        try:
+            snapshot_frequency = instance_snapshot_frequency
+        except:
+            pass
+        
+        try:
+            # Check if the vol has our tag, and get the frequency from it
+            vol_snapshot_frequency = int(volume.tags[tag_name])
+            if vol_snapshot_frequency is not None:
+                snapshot_frequency = vol_snapshot_frequency
+        except:
+            pass
+        
+        if snapshot_frequency is None or snapshot_frequency == 0:
+            continue
 
+        try:
+            # Check if the vol has a retention override tag
+            vol_keep_snapshots = int(volume.tags['autosnap_retention'])
+            if vol_keep_snapshots is not None:
+                keep_snapshots = vol_keep_snapshots
+        except:
+            # If not, continue to next vol
+            pass
         try:
             # Ignore volumes tagged with 'autosnap_ignore' from that list
             volume.tags['autosnap_ignore']
@@ -218,15 +266,14 @@ for instance in instances:
             continue
         except:
             pass
-
+        count_processed += 1  # Increase our "total processed" count
         try:
             if frequency_check():
                 # Take snapshot if it's old enough
-                try:
-                    config['dry_run']  # but not if we're doing a dry run
+                if get_config('dry_run') is not None:
                     logging.info("%s/%s: Creating snapshot (%s on %s)",
                                  instance.id, volume.id, volume.attach_data.device, instance_name)
-                except:
+                else:
                     snapshot = create_snapshot()  # create the snapshot!
                     logging.info("%s/%s/%s: Creating snapshot (%s on %s)",
                                  instance.id,
@@ -240,18 +287,18 @@ for instance in instances:
                              instance.id, volume.id, volume.attach_data.device, instance_name)
                 count_skips += 1  # increase our total skip count
         except Exception as e:
-            logging.info("%s/%s: Error creating snapshot for volume: %s",
+            errmsg = True
+            logging.error("%s/%s: Error creating snapshot for volume: %s",
                          instance.id, volume.id, e)
             count_errors += 1
 
         # Clean up old snapshots
         try:
-            try:
-                config['dry_run']  # but not if we're doing a dry run
-            except:
+            if get_config('dry_run') is None:
                 count_deletes += clean_snapshots()  # Do it, and add deletes to global counter
         except Exception as e:
-            logging.info("%s/%s: Error cleaning old snapshots for volume: %s",
+            errmsg = True
+            logging.error("%s/%s: Error cleaning old snapshots for volume: %s",
                          instance.id, volume.id, e)
             count_errors += 1
 
@@ -265,10 +312,12 @@ logging.info("Snapshots created: %s", str(count_creates))
 logging.info("Snapshots deleted: %s", str(count_deletes))
 logging.info("Errors: %s", str(count_errors))
 
-# Report outcome to SNS (if configured)
-if sns_arn:
+
+# Report outcome to SNS (if configured AND not dry run)
+# Only send SNS when: 1. has error 2. create or delete snapshot
+if sns_arn && get_config('dry_run') is None:
+    snsConsole.flush()
     if errmsg:
-        sns.publish(
-            sns_arn, 'Error in processing volumes: '
-            + errmsg, 'Error with AWS Snapshot')
-    sns.publish(sns_arn, message, 'Finished AWS snapshotting')
+        sns.publish(sns_arn, snsStream.getvalue(), 'Error with AWS Snapshot')
+    elif (count_creates + count_deletes) > 0:
+        sns.publish(sns_arn, snsStream.getvalue(), 'Finished AWS snapshotting') 
