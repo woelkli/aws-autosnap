@@ -25,9 +25,9 @@ If you'd like to use SNS notifications, create an SNS topic in your AWS account 
 All the configuration parameters can be *overrided* by passing environment variables. The variable naming convention is as follows, AUTOSNAP_{VARIABLE_NAME}. So, for example AUTOSNAP_LOG_FILE.
 #### Examples
 1. Run with SNS enabled
-	```docker run -d --name ebs-snapshot-service -e AWS_ACCESS_KEY_ID=[CHANGE_ME] -e AWS_SECRET_ACCESS_KEY=[CHANGE_ME] -e AUTOSNAP_SNS_ARN=[CHANGE_ME] lhan/ebs-snapshot-service```
+	```docker run -d --name ebs-snapshot-service -e AWS_ACCESS_KEY_ID=[CHANGE_ME] -e AWS_SECRET_ACCESS_KEY=[CHANGE_ME] -e AUTOSNAP_SNS_ARN=[CHANGE_ME] xetusoss/ebs-snapshot-service```
 2. Dry run
-	```docker run -d --name ebs-snapshot-service -e AWS_ACCESS_KEY_ID=[CHANGE_ME] -e AWS_SECRET_ACCESS_KEY=[CHANGE_ME] -e AUTOSNAP_DRY_RUN=true lhan/ebs-snapshot-service```
+	```docker run -d --name ebs-snapshot-service -e AWS_ACCESS_KEY_ID=[CHANGE_ME] -e AWS_SECRET_ACCESS_KEY=[CHANGE_ME] -e AUTOSNAP_DRY_RUN=true xetusoss/ebs-snapshot-service```
 
 ### Snapshot Scheduling
 For each _instance_ or _volumes_ that you want to snapshot, add the following tags:
