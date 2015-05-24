@@ -315,7 +315,7 @@ logging.info("Errors: %s", str(count_errors))
 
 # Report outcome to SNS (if configured AND not dry run)
 # Only send SNS when: 1. has error 2. create or delete snapshot
-if sns_arn && get_config('dry_run') is None:
+if sns_arn and get_config('dry_run') is None:
     snsConsole.flush()
     if errmsg:
         sns.publish(sns_arn, snsStream.getvalue(), 'Error with AWS Snapshot')
