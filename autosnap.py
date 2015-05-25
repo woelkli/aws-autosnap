@@ -217,7 +217,7 @@ for instance in instances:
         keep_snapshots = int(instance.tags['autosnap_retention'])
     except:
         # Otherwise, set it to the global setting
-        keep_snapshots = get_config('keep_snapshots')
+        keep_snapshots = int(get_config('keep_snapshots'))
 
     try:
         # Get instance's Name tag
