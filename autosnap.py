@@ -155,13 +155,13 @@ def get_snapshots(volume):
 def create_snapshot():
     # Set the snapshot description
     description = "AUTOSNAP: {0} ({1}) at {2}".format(
-        instance_name,
+        snap_name,
         volume.attach_data.device,
         datetime.today().strftime('%d-%m-%Y %H:%M:%S'))
     # Create snapshot (and store the ID)
     snapshot = volume.create_snapshot(description)
     # Add some tags to the snapshot for identification
-    snapshot.add_tag("Name", instance_name)
+    snapshot.add_tag("Name", snap_name)
     snapshot.add_tag("snapshot_type", tag_name)
     snapshot.add_tag("instance_id", instance.id)
     snapshot.add_tag("volume_id", volume.id)
@@ -189,7 +189,7 @@ def clean_snapshots():
     for deletesnap in range(delta):
         snapshot = deletelist[deletesnap]
         logging.info("%s/%s/%s: Deleting snapshot (%s on %s)",
-                     instance.id, volume.id, snapshot.id, volume.attach_data.device, instance_name)
+                     instance.id, volume.id, snapshot.id, volume.attach_data.device, snap_name)
         snapshot.delete()  # Delete it
         deletes += 1  # Increase our deletion counter
     return deletes
@@ -233,6 +233,14 @@ for instance in instances:
     for volume in volumes:
         vol_snapshot_frequency = None
         vol_keep_snapshots = None
+        vol_name = None
+        
+        try:
+            vol_name = "{0}".format(volume.tags['Name'])
+        except:
+            vol_name = "{0}".format(volume.id)
+        
+        snap_name = instance_name + ' - ' + vol_name
         try:
             snapshot_frequency = instance_snapshot_frequency
         except:
@@ -261,7 +269,7 @@ for instance in instances:
             # Ignore volumes tagged with 'autosnap_ignore' from that list
             volume.tags['autosnap_ignore']
             logging.info("%s/%s: Ignoring volume, \'autosnap_ignore\' tag present (%s on %s) ",
-                         instance.id, volume.id, volume.attach_data.device, instance_name)
+                         instance.id, volume.id, volume.attach_data.device, snap_name)
             count_ignores += 1  # Increase our "total ignored" counter
             continue
         except:
@@ -272,7 +280,7 @@ for instance in instances:
                 # Take snapshot if it's old enough
                 if get_config('dry_run') is not None:
                     logging.info("%s/%s: Creating snapshot (%s on %s)",
-                                 instance.id, volume.id, volume.attach_data.device, instance_name)
+                                 instance.id, volume.id, volume.attach_data.device, snap_name)
                 else:
                     snapshot = create_snapshot()  # create the snapshot!
                     logging.info("%s/%s/%s: Creating snapshot (%s on %s)",
@@ -280,11 +288,11 @@ for instance in instances:
                                  volume.id,
                                  snapshot.id,
                                  volume.attach_data.device,
-                                 instance_name)
+                                 snap_name)
                 count_creates += 1  # increase our total success count
             else:
                 logging.info("%s/%s: Skipping volume, last snapshot not old enough (%s on %s)",
-                             instance.id, volume.id, volume.attach_data.device, instance_name)
+                             instance.id, volume.id, volume.attach_data.device, snap_name)
                 count_skips += 1  # increase our total skip count
         except Exception as e:
             errmsg = True
