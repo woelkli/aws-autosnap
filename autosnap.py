@@ -26,6 +26,7 @@ count_errors = 0
 count_success = 0
 count_ignores = 0
 count_skips = 0
+count_skips_tag = 0
 count_processed = 0
 
 # A wrapper function to first retrieve from ENV then config.py
@@ -255,6 +256,7 @@ for instance in instances:
             pass
         
         if snapshot_frequency is None or snapshot_frequency == 0:
+            count_skips_tag += 1  # Increase our "total skip_tag" counter
             continue
 
         try:
@@ -315,7 +317,8 @@ for instance in instances:
 logging.info("Finished processing snapshots")
 logging.info("Volumes processed: %s", str(count_processed))
 logging.info("Volumes ignored: %s", str(count_ignores))
-logging.info("Volumes skipped: %s", str(count_skips))
+logging.info("Volumes skipped (frequency): %s", str(count_skips))
+logging.info("Volumes skipped (missing Tag): %s", str(count_skips_tag))
 logging.info("Snapshots created: %s", str(count_creates))
 logging.info("Snapshots deleted: %s", str(count_deletes))
 logging.info("Errors: %s", str(count_errors))
