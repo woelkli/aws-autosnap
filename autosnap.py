@@ -52,10 +52,15 @@ console = logging.StreamHandler(sys.stdout)
 console.setLevel(logging.INFO)
 logger.addHandler(console)
 
-
+# get if this is a dry run
+dry_run = get_config('dry_run')
+if dry_run == "True":
+    dry_run = True
+if dry_run == "False":
+    dry_run = False
 
 # Start log
-if get_config('dry_run') is not None:
+if dry_run:
     
     logging.info("Initializing snapshot dry run")
 else:
@@ -280,7 +285,7 @@ for instance in instances:
         try:
             if frequency_check():
                 # Take snapshot if it's old enough
-                if get_config('dry_run') is not None:
+                if dry_run:
                     logging.info("%s/%s: Creating snapshot (%s on %s)",
                                  instance.id, volume.id, volume.attach_data.device, snap_name)
                 else:
@@ -304,7 +309,7 @@ for instance in instances:
 
         # Clean up old snapshots
         try:
-            if get_config('dry_run') is None:
+            if not dry_run:
                 count_deletes += clean_snapshots()  # Do it, and add deletes to global counter
         except Exception as e:
             errmsg = True
@@ -326,7 +331,7 @@ logging.info("Errors: %s", str(count_errors))
 
 # Report outcome to SNS (if configured AND not dry run)
 # Only send SNS when: 1. has error 2. create or delete snapshot
-if sns_arn and get_config('dry_run') is None:
+if sns_arn and not dry_run:
     snsConsole.flush()
     if errmsg:
         sns.publish(sns_arn, snsStream.getvalue(), 'Error with AWS Snapshot')
